@@ -8,51 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-      .github-link {
-        position: fixed;
-        top: 12px;
-        right: 12px;
-        width: 44px;
-        height: 44px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
-        padding: 6px;
-        z-index: 1000;
-        transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
-      }
-      .github-link svg { width: 24px; height: 24px; fill: #111; }
-      .github-link:hover { transform: translateY(-2px); }
-
-      /* Dark mode styles */
-      @media (prefers-color-scheme: dark) {
-        .github-link {
-          background: rgba(255,255,255,0.06);
-          border: 1px solid rgba(255,255,255,0.06);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-        }
-        .github-link svg {
-          fill: #e6eef6;
-          filter: drop-shadow(0 1px 0 rgba(0,0,0,0.6));
-        }
-        .github-link:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 18px rgba(0,0,0,0.6);
-        }
-      }
-    </style>
   </head>
   <body>
     <div id="app"></div>
-    <a class="github-link" href="https://github.com/shmilyty/deco" aria-label="View project on GitHub" target="_blank" rel="noopener noreferrer">
-      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.387.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.729.083-.729 1.205.085 1.84 1.236 1.84 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.775.42-1.305.763-1.605-2.665-.305-5.466-1.332-5.466-5.93 0-1.31.468-2.381 1.235-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23a11.52 11.52 0 013.003-.403c1.02.005 2.045.138 3.003.403 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.61-2.803 5.62-5.475 5.92.43.37.823 1.102.823 2.222 0 1.606-.014 2.898-.014 3.293 0 .32.218.694.825.576C20.565 22.092 24 17.592 24 12.297 24 5.67 18.627.297 12 .297z"></path>
-      </svg>
-    </a>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

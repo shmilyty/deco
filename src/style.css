@@ -77,3 +77,38 @@ button:focus-visible {
     background-color: #f9f9f9;
   }
 }
+.github-link {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  padding: 6px;
+  z-index: 1000;
+  transition: transform .12s ease, background .12s ease, box-shadow .12s ease;
+}
+.github-link svg { width: 24px; height: 24px; fill: #111; }
+.github-link:hover { transform: translateY(-2px); }
+
+/* Dark mode styles */
+@media (prefers-color-scheme: dark) {
+  .github-link {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.6);
+  }
+  .github-link svg {
+    fill: #e6eef6;
+    filter: drop-shadow(0 1px 0 rgba(0,0,0,0.6));
+  }
+  .github-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.6);
+  }
+}
