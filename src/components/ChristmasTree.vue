@@ -135,7 +135,7 @@ const isLoading = ref(true); // 新增状态
         :style="{ left: item.x + '%', top: item.y + '%' }"
         @click.stop="handleDecorationClick(item)" 
       >
-        {{ item.icon }}
+        <img :src="item.icon" class="tree-decoration-img" />
       </div>
 
       <div 
@@ -164,12 +164,17 @@ const isLoading = ref(true); // 新增状态
 .decoration { 
   position: absolute; 
   transform: translate(-50%, -50%); 
-  font-size: 2rem; 
+  /*font-size: 2rem;*/ 
+  width: 40px; 
+  height: 40px;
   cursor: pointer; 
   transition: transform 0.2s; 
   z-index: 5; 
   transform-origin: top center; /* 以顶部为支点摇摆 */
   animation: swing 3s ease-in-out infinite;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 /* .decoration:hover { transform: translate(-50%, -50%) scale(1.2); } */
 .decoration:hover {
@@ -199,6 +204,12 @@ const isLoading = ref(true); // 新增状态
   z-index: 20;
 }
 
+.tree-decoration-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); /* 让挂件更有立体感 */
+}
 
 /* 1. 限制树的最大高度 */
 .tree-img {

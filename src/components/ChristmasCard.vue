@@ -48,24 +48,38 @@ const step = ref('edit');
 // ⚠️ 注意：这里不再只存 icon 字符串，而是存当前选中图标在数组中的 索引
 const currentIndex = ref(0);
 // 可选的图标列表
+// const icons = [
+//   '🎁', // 礼物
+//   '⭐️',
+//   '🍬', // 糖果
+//   '🧦', // 袜子
+//   '🧤', // 手套 (New)
+//   '🍫', // 巧克力 (New)
+//   '🐷',
+//   '🍪', // 姜饼人/曲奇 (New)
+//   '🔔', // 铃铛
+//   '🦌', // 麋鹿
+//   '⛄', // 雪人
+//   '❄️', //snowflake 
+//   '🍻',
+//   '💰',
+//   '🎊',
+//   '💝',
+//   '🀄️',
+// ];
+
 const icons = [
-  '🎁', // 礼物
-  '⭐️',
-  '🍬', // 糖果
-  '🧦', // 袜子
-  '🧤', // 手套 (New)
-  '🍫', // 巧克力 (New)
-  '🐷',
-  '🍪', // 姜饼人/曲奇 (New)
-  '🔔', // 铃铛
-  '🦌', // 麋鹿
-  '⛄', // 雪人
-  '❄️', //snowflake 
-  '🍻',
-  '💰',
-  '🎊',
-  '💝',
-  '🀄️',
+  // '/icons/gift.png',
+  // '/icons/candy.png',
+  // '/icons/sock.png',
+  // '/icons/bell.png',
+  // '/icons/cookie.png'
+  '/icons/crystalball.png',
+  '/icons/gingerbread.png',
+  '/icons/glove.png',
+  '/icons/snowflake.png',
+  '/icons/gift.png',
+  // ... 添加更多
 ];
 const visibleIcons = computed(() => {
   const total = icons.length;
@@ -252,7 +266,7 @@ const confirmSubmit = () => {
 					:style="{ '--offset': item.offset, '--abs-offset': Math.abs(item.offset) }"
 					@click="selectIconByOffset(item.offset)"
 				>
-					{{ item.icon }}
+					<img :src="item.icon" alt="icon" class="icon-img" />
 				</div>
 				</div>
 				<button class="nav-btn right" @click="nextIcon">›</button>
@@ -291,7 +305,7 @@ const confirmSubmit = () => {
 			<h3 class="title">确认挂上去吗？</h3>
 			
 			<div class="preview-box">
-				<div class="preview-icon">{{ icons[currentIndex] }}</div>
+				<div class="preview-icon"><img :src="icons[currentIndex]" class="preview-img-lg" /></div>
 				<div class="preview-from">From: {{ nickname || '神秘人' }}</div>
 				<div class="preview-body">{{ content }}</div>
 				<div v-if="previewUrls.length > 0" class="image-gallery">
@@ -323,7 +337,9 @@ const confirmSubmit = () => {
           </div>
 
           <div v-else class="unlocked-view">
-            <div class="big-icon">{{ data?.icon }}</div>
+            <div class="big-icon">
+              <img :src="data?.icon" class="preview-img-lg" />
+            </div>
             <div class="message-meta">From: {{ data?.nickname }}</div>
             <div class="message-body">
               {{ data?.content }}
@@ -749,5 +765,21 @@ textarea { resize: none; }
   border-radius: 6px;
   border: 1px solid #eee;
   flex-shrink: 0;
+}
+.icon-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain; /* 保持比例，不拉伸 */
+  pointer-events: none; /* 防止拖拽图片 */
+  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1)); /* 给图标加点阴影 */
+}
+
+/* 2. 预览页/查看页的大图标 */
+.preview-img-lg {
+  width: 80px;  /* 设置一个合适的大尺寸 */
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
 }
 </style>
