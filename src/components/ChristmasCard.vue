@@ -3,6 +3,19 @@ import { ref, computed, watch } from 'vue';
 const selectedFiles = ref([]); // 存原始文件对象 (用于提交)
 const previewUrls = ref([]);   // 存 Blob URL (用于显示)
 // 接收父组件传来的参数
+const showWarning = ref(false);
+const warningMsg = ref("");
+
+// --- 🛠️ 工具函数：触发警告 ---
+const triggerWarning = (msg) => {
+  warningMsg.value = msg;
+  showWarning.value = true;
+  
+  // 3秒后自动关闭
+  setTimeout(() => {
+    showWarning.value = false;
+  }, 3000);
+};
 const props = defineProps({
   isOpen: Boolean,        // 弹窗是否打开
   mode: String,           // 'write' (写留言) 或 'read' (读留言)
@@ -14,7 +27,7 @@ const handleFileChange = (event) => {
   
   // 检查数量
   if (selectedFiles.value.length + files.length > 3) {
-    alert("最多只能上传 3 张照片哦 📷");
+    triggerWarning("包裹太重啦，最多只能放 3 张照片哦 📷");
     return;
   }
 
@@ -141,7 +154,7 @@ watch(() => props.isOpen, (newVal) => {
 // 1. 去预览
 const toPreview = () => {
   if (!content.value.trim()) {
-    alert("请写下你的祝福正文哦！"); // 简单校验
+    triggerWarning("你的祝福卡片还是空的呢 📝"); // 简单校验
     return;
   }
   step.value = 'preview';
@@ -177,6 +190,12 @@ const confirmSubmit = () => {
 <template>
   <Transition name="fade">
     <div v-if="isOpen" class="overlay" @click.self="$emit('close')">
+      <Transition name="slide-down">
+        <div v-if="showWarning" class="warning-toast">
+          <span class="warning-icon">⚠️</span>
+          {{ warningMsg }}
+        </div>
+      </Transition>
       <div class="card" :class="{ 'locked-shake': mode === 'read' && locked }">
         
         <button class="close-btn" @click="$emit('close')">✕</button>
@@ -249,8 +268,8 @@ const confirmSubmit = () => {
             </div>
           </div>
         </div> -->
-		<div v-if="mode === 'write'" class="flip-scene">
-		<div class="flip-wrapper" :class="{ 'is-flipped': step === 'preview' }">
+	  	<div v-if="mode === 'write'" class="flip-scene">
+	  	<div class="flip-wrapper" :class="{ 'is-flipped': step === 'preview' }">
 			
 			<div class="card-face card-front">
 			<h3 class="title">写下祝福 🎄</h3>
@@ -781,5 +800,42 @@ textarea { resize: none; }
   object-fit: contain;
   margin-bottom: 10px;
   filter: drop-shadow(0 5px 15px rgba(0,0,0,0.2));
+}
+.warning-toast {
+  position: absolute;
+  top: 10%; /* 浮在卡片上方一点的位置 */
+  left: 50%;
+  transform: translateX(-50%);
+  
+  /* 视觉风格：醒目的橙色，圆润可爱 */
+  background: #f97316; 
+  color: white;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-weight: bold;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 15px rgba(249, 115, 22, 0.4);
+  z-index: 200; /* 必须比 .card (默认z-index) 高 */
+  
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap; /* 防止文字换行 */
+}
+
+.warning-icon {
+  font-size: 1.2rem;
+}
+
+/* --- 下滑入场动画 --- */
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px); /* 从上面一点掉下来 */
 }
 </style>

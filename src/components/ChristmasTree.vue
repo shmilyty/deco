@@ -1,7 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'; // 引入 onMounted
+// import { ref, onMounted } from 'vue'; // 引入 onMounted
 import ChristmasCard from './ChristmasCard.vue';
-
+import { ref, onMounted, computed, watch } from 'vue'; // 确保引入了 computed 和 watch
 // 定义后端地址 (本地开发时)
 const API_URL = 'http://localhost:3000/api/decorations';
 
@@ -11,8 +11,39 @@ const isModalOpen = ref(false);
 const modalMode = ref('write'); // 'write' | 'read'
 const selectedDecoration = ref(null);
 const pendingPoint = ref(null);
+const showFullModal = ref(false);    // 控制“树满了”弹窗
+const showSuccessToast = ref(false); // 控制“成功”提示
 // --- 1. 获取数据 ---
+// ... existing constants
+const PAGE_SIZE = 10; // 🎄 定义每棵树最多挂几个
 
+// ... existing refs (decorations, etc.)
+const currentPage = ref(0); // 当前是第几棵树 (从0开始)
+const totalTrees = computed(() => {
+  if (decorations.value.length === 0) return 1;
+  return Math.ceil(decorations.value.length / PAGE_SIZE);
+});
+const currentTreeDecorations = computed(() => {
+  const start = currentPage.value * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  // 截取当前页的数据
+  return decorations.value.slice(start, end);
+});
+
+// --- 翻页动作 ---
+const prevTree = () => {
+  if (currentPage.value > 0) currentPage.value--;
+};
+
+const nextTree = () => {
+  // 如果当前是最后一页，且满了，允许去往（新建）下一页
+  if (currentPage.value < totalTrees.value - 1) {
+    currentPage.value++;
+  } else if (currentTreeDecorations.value.length === PAGE_SIZE) {
+    // 最后一页满了，点击下一页相当于“去往新树”
+    currentPage.value++;
+  }
+};
 const fetchDecorations = async () => {
   isLoading.value = true;
   try {
@@ -47,17 +78,53 @@ onMounted(() => {
 });
 
 // --- 点击树 (准备挂礼物) ---
+// const handleTreeClick = (event) => {
+//   // 如果点到了礼物上，不要触发树的点击（通过事件冒泡阻止，或者这里简单判断）
+//   if (event.target.closest('.decoration')) return;
+
+//   const rect = event.currentTarget.getBoundingClientRect();
+//   const x = ((event.clientX - rect.left) / rect.width) * 100;
+//   const y = ((event.clientY - rect.top) / rect.height) * 100;
+
+//   pendingPoint.value = { x: x.toFixed(2), y: y.toFixed(2) };
+  
+//   // 打开写模式
+//   modalMode.value = 'write';
+//   selectedDecoration.value = null;
+//   isModalOpen.value = true;
+// };
+
 const handleTreeClick = (event) => {
-  // 如果点到了礼物上，不要触发树的点击（通过事件冒泡阻止，或者这里简单判断）
   if (event.target.closest('.decoration')) return;
 
+  // 🛑 检查：这棵树是不是满了？
+  if (currentTreeDecorations.value.length >= PAGE_SIZE) {
+    // 弹窗提醒，或者询问是否去新树
+    // const shouldGoNew = confirm("这棵树已经挂满啦！🎄\n要去一棵新树挂礼物吗？");
+    // if (shouldGoNew) {
+    //   // 跳到最后一页（如果是满的，逻辑上会自动变成新的一页的基础）
+    //   // 简单的逻辑：直接跳到最后一页的下一页（如果最后一页没满，就跳到最后一页）
+    //   const lastPageIdx = Math.ceil(decorations.value.length / PAGE_SIZE) - 1;
+    //   const lastPageCount = decorations.value.length % PAGE_SIZE;
+      
+    //   if (lastPageCount === 0 && decorations.value.length > 0) {
+    //     // 刚好填满，去新的一页
+    //     currentPage.value = lastPageIdx + 1;
+    //   } else {
+    //     // 没填满，去最后一页
+    //     currentPage.value = Math.max(0, lastPageIdx);
+    //   }
+    // }
+    showFullModal.value = true;
+    return; // 阻止本次点击
+  }
+
+  // ... 下面是原有的坐标计算逻辑 ...
   const rect = event.currentTarget.getBoundingClientRect();
   const x = ((event.clientX - rect.left) / rect.width) * 100;
   const y = ((event.clientY - rect.top) / rect.height) * 100;
 
   pendingPoint.value = { x: x.toFixed(2), y: y.toFixed(2) };
-  
-  // 打开写模式
   modalMode.value = 'write';
   selectedDecoration.value = null;
   isModalOpen.value = true;
@@ -69,7 +136,20 @@ const handleDecorationClick = (item) => {
   selectedDecoration.value = item;
   isModalOpen.value = true;
 };
-
+const handleGoToNewTree = () =>{
+  // showFullModal = false
+  const lastPageIdx = Math.ceil(decorations.value.length / PAGE_SIZE) - 1;
+  const lastPageCount = decorations.value.length % PAGE_SIZE;
+  
+  if (lastPageCount === 0 && decorations.value.length > 0) {
+    // 刚好填满，去新的一页
+    currentPage.value = lastPageIdx + 1;
+  } else {
+    // 没填满，去最后一页
+    currentPage.value = Math.max(0, lastPageIdx);
+  }
+  showFullModal.value=false;
+} 
 // --- 接收卡片提交的数据 ---
 const handleSubmit = async (formData) => {
   try {
@@ -103,7 +183,13 @@ const handleSubmit = async (formData) => {
       // 成功后，重新拉取最新列表，或者手动 push 到本地数组
       await fetchDecorations(); 
       closeModal();
-      alert("挂上去啦！🎄");
+      // alert("挂上去啦！🎄");
+      const lastPage = Math.ceil(decorations.value.length / PAGE_SIZE) - 1;
+      currentPage.value = Math.max(0, lastPage);
+      showSuccessToast.value = true;
+      setTimeout(() => {
+        showSuccessToast.value = false;
+      }, 2000); // 3秒后自动消失
     } else {
       alert("出错了：" + result.error);
     }
@@ -128,7 +214,7 @@ const isLoading = ref(true); // 新增状态
       <div v-if="isLoading" class="loading-text">
         正在从北极运送礼物... 🦌
       </div>
-      <div 
+      <!-- <div 
         v-for="item in decorations" 
         :key="item.id"
         class="decoration"
@@ -143,8 +229,75 @@ const isLoading = ref(true); // 新增状态
         class="pending-dot"
         :style="{ left: pendingPoint.x + '%', top: pendingPoint.y + '%' }"
       ></div>
-    </div>
+    </div> -->
+    <div 
+        v-for="item in currentTreeDecorations" 
+        :key="item.id"
+        class="decoration"
+        :style="{ left: item.x + '%', top: item.y + '%' }"
+        @click.stop="handleDecorationClick(item)" 
+      >
+        <img :src="item.icon" class="tree-decoration-img" />
+      </div>
 
+      <div 
+        v-if="pendingPoint" 
+        class="pending-dot"
+        :style="{ left: pendingPoint.x + '%', top: pendingPoint.y + '%' }"
+      ></div>
+    </div>
+    
+    <div class="tree-pagination">
+      <button 
+        class="nav-arrow" 
+        @click="prevTree" 
+        :disabled="currentPage === 0"
+      >
+        ◀
+      </button>
+      
+      <div class="page-info">
+        🎁
+        <!-- <span class="I">🎁</span> -->
+        <span class="count">{{ currentTreeDecorations.length }}</span>
+        <span class="divider">/</span>
+        <span class="limit">{{ PAGE_SIZE }}</span>
+      </div>
+      
+      <button 
+        class="nav-arrow" 
+        @click="nextTree"
+        :disabled="currentTreeDecorations.length < PAGE_SIZE && currentPage >= totalTrees - 1"
+      >
+        ▶
+      </button>
+    </div>
+    <div class="tree-wrapper">
+    <Transition name="pop">
+      <div v-if="showFullModal" class="custom-modal-overlay">
+        <div class="custom-modal">
+          <div class="modal-icon">🎄</div>
+          <h3>这棵树有点挤啦！</h3>
+          <p>当前树已经挂满了 {{ PAGE_SIZE }} 个礼物。<br>要前往一棵新的树继续挂吗？</p>
+          <div class="modal-actions">
+            <button class="btn-cancel" @click="showFullModal = false">我就看看</button>
+            <button class="btn-confirm" @click="handleGoToNewTree">去新树 ➔</button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition name="slide-up">
+      <div v-if="showSuccessToast" class="success-toast">
+        <span class="toast-icon">✨</span>
+        <div class="toast-text">
+          <h4>挂上去啦！</h4>
+          <p>你的祝福已经送达</p>
+        </div>
+      </div>
+    </Transition>
+
+  </div>
     <ChristmasCard 
       :is-open="isModalOpen"
       :mode="modalMode"
@@ -245,4 +398,138 @@ const isLoading = ref(true); // 新增状态
   height: 100%; 
   padding: 10px; /* 减小 padding */
 }
+.tree-pagination {
+  position: absolute;
+  bottom: 20px; /* 距离底部 */
+  left: 50%;
+  transform: translateX(-50%);
+  
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  
+  background: rgba(0, 0, 0, 0.4); /* 半透明黑底 */
+  backdrop-filter: blur(4px);
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 20;
+}
+
+/* 箭头按钮 */
+.nav-arrow {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 10px;
+  transition: all 0.2s;
+  opacity: 0.8;
+}
+.nav-arrow:hover:not(:disabled) {
+  transform: scale(1.2);
+  opacity: 1;
+  color: #fbbf24; /* 悬停变黄色 */
+}
+.nav-arrow:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
+}
+
+/* 中间的计数文字 */
+.page-info {
+  font-family: 'Mountains of Christmas', cursive; /* 使用之前的艺术字体 */
+  font-size: 1.8rem;
+  color: white;
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  user-select: none;
+}
+
+.count {
+  color: #fbbf24; /* 当前数量亮黄色 */
+  font-weight: bold;
+}
+.limit {
+  font-size: 1.2rem;
+  opacity: 0.7;
+}
+
+.custom-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(5px); /* 背景模糊 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+/* --- 1. 确认弹窗样式 --- */
+.custom-modal {
+  background: #fffbf0;
+  border: 4px solid #d42426;
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  width: 90%;
+  max-width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  color: #333;
+}
+
+.modal-icon { font-size: 3rem; margin-bottom: 10px; }
+.custom-modal h3 { color: #d42426; margin: 0 0 10px 0; }
+.custom-modal p { color: #666; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px; }
+
+.modal-actions { display: flex; gap: 10px; justify-content: center; }
+
+.btn-cancel, .btn-confirm {
+  padding: 10px 20px;
+  border-radius: 50px;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.btn-cancel { background: #eee; color: #666; }
+.btn-confirm { background: #d42426; color: white; box-shadow: 0 4px 10px rgba(212, 36, 38, 0.3); }
+.btn-confirm:hover { transform: scale(1.05); }
+
+/* --- 2. 成功 Toast 样式 --- */
+.success-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 居中显示 */
+  /* 如果想显示在顶部，可以改用: top: 10%; transform: translateX(-50%); */
+  
+  background: rgba(22, 91, 51, 0.95); /* 圣诞绿背景 */
+  color: white;
+  padding: 15px 30px;
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  z-index: 200;
+  border: 2px solid #fbbf24; /* 金边 */
+  min-width: 200px;
+}
+
+.toast-icon { font-size: 2rem; }
+.toast-text h4 { margin: 0; font-size: 1.1rem; color: #fbbf24; }
+.toast-text p { margin: 0; font-size: 0.8rem; opacity: 0.9; }
+
+/* --- 动画效果 --- */
+/* 弹窗 Pop 进场 */
+.pop-enter-active, .pop-leave-active { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.pop-enter-from, .pop-leave-to { opacity: 0; transform: scale(0.8); }
+
+/* Toast 滑动进场 */
+.slide-up-enter-active, .slide-up-leave-active { transition: all 0.4s ease; }
+.slide-up-enter-from, .slide-up-leave-to { opacity: 0; transform: translate(-50%, -30%); } /* 从上方稍微掉下来的感觉 */
 </style>

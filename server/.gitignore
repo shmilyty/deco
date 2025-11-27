@@ -6,5 +6,5 @@ node_modules/*
 
 /prisma/dev.db
 
-/uploads
+/uploads/*
 
