@@ -5,7 +5,10 @@ const previewUrls = ref([]);   // 存 Blob URL (用于显示)
 // 接收父组件传来的参数
 const showWarning = ref(false);
 const warningMsg = ref("");
+const EASTER_EGG_ICON = '/icons/secret.png'; // 记得放一张特殊的图在这里！
 
+// 2. 新增状态：当前是否触发了彩蛋
+const isEasterEgg = ref(false);
 // --- 🛠️ 工具函数：触发警告 ---
 const triggerWarning = (msg) => {
   warningMsg.value = msg;
@@ -92,52 +95,91 @@ const icons = [
   '/icons/glove.png',
   '/icons/snowflake.png',
   '/icons/gift.png',
+  '/icons/ribbon.png',
+  '/icons/ball.png',
+  '/icons/mistletoe.png',
+  '/icons/cupcake.png',
   // ... 添加更多
 ];
 const visibleIcons = computed(() => {
   const total = icons.length;
   const result = [];
   
-  // 偏移量：从 -2 到 2
   for (let i = -2; i <= 2; i++) {
-    // 循环取模算法：保证索引永远在 0 ~ total-1 之间
-    // (current + offset + total) % total
     const index = (currentIndex.value + i + total) % total;
+    
+    // 默认图标
+    let iconPath = icons[index];
+
+    // ✨ 彩蛋逻辑：如果是中间那个(offset=0)，且触发了彩蛋，替换图片
+    if (i === 0 && isEasterEgg.value) {
+      iconPath = EASTER_EGG_ICON;
+    }
+
     result.push({
-      icon: icons[index],
-      offset: i, // 记录它是左边第几个还是右边第几个
+      icon: iconPath,
+      offset: i,
       realIndex: index
     });
   }
   return result;
 });
+const tryTriggerEasterEgg = () => {
+  // 先重置（一旦切换，上一个彩蛋就消失，除非这次又随到了）
+  isEasterEgg.value = false;
+  
+  // 2% 概率
+  if (Math.random() < 0.02) {
+    isEasterEgg.value = true;
+    console.log("🎉 彩蛋触发！"); // 方便你自己调试看
+  }
+};
 const nextIcon = () => {
   currentIndex.value = (currentIndex.value + 1) % icons.length;
+  tryTriggerEasterEgg();
 };
 const prevIcon = () => {
   currentIndex.value = (currentIndex.value - 1 + icons.length) % icons.length;
+  tryTriggerEasterEgg();
 };
 
 // 点击某个图标直接跳到那个图标
 const selectIconByOffset = (offset) => {
-  // 如果 offset 是 0，说明点的就是中间那个，不做操作
-  // 如果 offset 是 1，相当于 nextIcon()
+  if (offset === 0) return; // 点中间的不刷新彩蛋，防止用户想保留彩蛋却不小心点到了
+  
   const total = icons.length;
   currentIndex.value = (currentIndex.value + offset + total) % total;
+  tryTriggerEasterEgg(); // <--- 加入这行
 };
 
 // 重置时（打开弹窗时）
+// watch(() => props.isOpen, (newVal) => {
+//   if (newVal && props.mode === 'write') {
+//     step.value = 'edit';
+//     currentIndex.value = 0; // 重置到第一个
+//     nickname.value = '';
+//     content.value = '';
+//     isPrivate.value = false;
+// 	selectedFiles.value = [];
+//     previewUrls.value = [];
+//   }
+// });
 watch(() => props.isOpen, (newVal) => {
   if (newVal && props.mode === 'write') {
+    // step.value = 'edit';
+    // currentIndex.value = 0;
+    isEasterEgg.value = false; // 打开时默认不显示彩蛋
+    // ... 其他重置 ...
     step.value = 'edit';
     currentIndex.value = 0; // 重置到第一个
     nickname.value = '';
     content.value = '';
     isPrivate.value = false;
-	selectedFiles.value = [];
+    selectedFiles.value = [];
     previewUrls.value = [];
   }
 });
+
 // 当弹窗打开时，重置状态
 // watch(() => props.isOpen, (newVal) => {
 //   if (newVal && props.mode === 'write') {
@@ -167,13 +209,15 @@ const backToEdit = () => {
 
 // 提交时 (获取当前选中的图标字符串)
 const confirmSubmit = () => {
+  // 判断当前用哪个图
+  const finalIcon = isEasterEgg.value ? EASTER_EGG_ICON : icons[currentIndex.value];
+
   emit('submit', {
-    icon: icons[currentIndex.value], // 👈 这里改用 computed 取值
+    icon: finalIcon, // <--- 这里改用 finalIcon
     nickname: nickname.value || '神秘人',
     content: content.value,
     isPrivate: isPrivate.value,
-    content: content.value,
-    images: selectedFiles.value // 👈 传递文件数组
+    images: selectedFiles.value
   });
 };
 // 3. 最终提交
@@ -281,7 +325,11 @@ const confirmSubmit = () => {
 					v-for="item in visibleIcons" 
 					:key="item.realIndex + '-' + item.offset"
 					class="carousel-item"
-					:class="{ 'active': item.offset === 0 }"
+					:class="{ 
+            'active': item.offset === 0,
+            'side': item.offset !== 0,
+            'is-egg': item.offset === 0 && isEasterEgg  /* 👈 新增：如果是中间且是彩蛋 */
+          }"
 					:style="{ '--offset': item.offset, '--abs-offset': Math.abs(item.offset) }"
 					@click="selectIconByOffset(item.offset)"
 				>
@@ -324,7 +372,7 @@ const confirmSubmit = () => {
 			<h3 class="title">确认挂上去吗？</h3>
 			
 			<div class="preview-box">
-				<div class="preview-icon"><img :src="icons[currentIndex]" class="preview-img-lg" /></div>
+				<div class="preview-icon"><img :src="isEasterEgg ? EASTER_EGG_ICON : icons[currentIndex]" class="preview-img-lg" /></div>
 				<div class="preview-from">
           <div class="from-label">From.</div>
           <div class="from-name">{{ nickname || '神秘人' }}</div>
@@ -898,5 +946,17 @@ textarea { resize: none; }
 .slide-down-leave-to {
   opacity: 0;
   transform: translate(-50%, -20px); /* 从上面一点掉下来 */
+}
+
+/* 给中间的活跃图标增加一个动态 class */
+.carousel-item.active.is-egg img {
+  filter: drop-shadow(0 0 15px gold); /* 发光 */
+  animation: egg-shake 0.5s ease-in-out infinite; /* 激动的抖动 */
+}
+
+@keyframes egg-shake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-10deg) scale(1.1); }
+  75% { transform: rotate(10deg) scale(1.1); }
 }
 </style>
