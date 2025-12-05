@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Vue.js-3.0-4FC08D?style=flat&logo=vue.js" alt="Vue 3" />
   <img src="https://img.shields.io/badge/Node.js-Express-green?style=flat&logo=node.js" alt="Node.js" />
   <img src="https://img.shields.io/badge/Database-SQLite-003B57?style=flat&logo=sqlite" alt="SQLite" />
-  <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
+  <img src="https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat" alt="License: GPL v3" />
 </div>
 <br />
 
