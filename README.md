@@ -1,235 +1,259 @@
 
-# 🎄 Deco (Christmas Time Capsule)
+# 🎄 Deco My Tree (Christmas Time Capsule)
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Vue.js-3.0-4FC08D?style=flat&logo=vue.js" alt="Vue 3" />
-  <img src="https://img.shields.io/badge/Node.js-Express-green?style=flat&logo=node.js" alt="Node.js" />
-  <img src="https://img.shields.io/badge/Database-SQLite-003B57?style=flat&logo=sqlite" alt="SQLite" />
+  <img src="https://img.shields.io/badge/Vue.js-3.5-4FC08D?style=flat&logo=vue.js" alt="Vue 3" />
+  <img src="https://img.shields.io/badge/Express-5.x-000000?style=flat&logo=express" alt="Express 5" />
+  <img src="https://img.shields.io/badge/Prisma-5.x-2D3748?style=flat&logo=prisma" alt="Prisma" />
+  <img src="https://img.shields.io/badge/SQLite-003B57?style=flat&logo=sqlite" alt="SQLite" />
   <img src="https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat" alt="License: GPL v3" />
 </div>
 <br />
 
-> 🎁 一个充满节日氛围的“数字时间胶囊”。在这个下雪的冬夜，给圣诞树挂上你的祝福，静待圣诞节解锁。
+> 🎁 一棵属于冬日的「时间胶囊」圣诞树。挂上你的祝福，静待圣诞节解锁。
 
-## 📖 项目简介 (Introduction)
+## 📖 项目简介
 
-**Deco** 是一个全栈互动的圣诞主题网页应用。用户可以选择精美的图标、上传照片并写下祝福挂在虚拟的圣诞树上。
+**Deco My Tree** 是一个多用户互动的圣诞主题全栈应用。每个用户可以种一棵属于自己的圣诞树，朋友们可以在树上挂礼物（写祝福、传照片）。
 
-最有意思的是它的 **“时间胶囊”** 机制：所有留言在 **12月25日** 之前都是“封印”状态（内容被加密隐藏），只有到了圣诞节当天，所有的祝福才会自动解封，供大家查阅。
+核心玩法是 **「时间胶囊」** 机制：所有留言在圣诞节前加密封存，12 月 25 日统一解锁。
 
-## ✨ 核心功能 (Features)
+## ✨ 功能特性
 
-* **🎄 互动圣诞树**：点击树梢即可挂上礼物，支持动态增加新树（分页查看）。
-* **🔒 时间封印 (Time Lock)**：
-    * 圣诞节前：留言内容被 AES 加密，UI 显示为“封印中”。
-    * 圣诞节后：自动解密，展示完整祝福和图片。
-* **📸 多媒体支持**：支持上传图片（最多3张），带有预览和压缩功能。
-* **🎨 沉浸式 UI**：
-    * 全屏雪花特效 & 暖色调渐变背景。
-    * 精美的毛玻璃 (Glassmorphism) 卡片设计。
-    * 3D 翻转卡片交互（填写面/预览面）。
-    * 左上角圣诞倒计时（带入场动画）。
-* **📱 完美移动端适配**：
-    * 解决 iOS/Android 滚动回弹问题。
-    * 专注模式：移动端写信时自动隐藏干扰元素。
-    * 流式布局适配各种尺寸屏幕。
-* **🥚 隐藏彩蛋**：切换图标时有 2% 概率触发特殊发光图标。
+**多用户系统**
+- 📧 邮箱 + 密码注册登录（Argon2 加密，邮箱验证）
+- 🔗 LinuxDo OAuth 第三方登录
+- 🌲 每人一棵专属圣诞树，可设置公开/私密/仅链接可访问
+- ⭐ 关注其他人的树
 
-## 🛠 技术栈 (Tech Stack)
+**互动体验**
+- 🎄 点击树上空白处挂礼物，支持上传最多 3 张图片
+- 🔒 时间封印：圣诞节前留言 AES 加密，节日当天自动解锁
+- 📄 每棵树 10 个礼物，满了自动分页到新树
+- 🥚 2% 概率隐藏彩蛋图标
 
-* **前端**：Vue 3 (Composition API), Vite, CSS3 (Animations, Grid/Flex)
-* **后端**：Node.js, Express, Multer (文件上传)
-* **数据库**：SQLite, Prisma ORM
-* **部署**：PM2, Caddy (自动 HTTPS), Cloudflare
+**UI 设计**
+- ❄️ 全屏雪花特效 + 暖色渐变背景
+- 🃏 3D 翻转卡片（填写面 / 预览面）
+- ⏰ 圣诞倒计时（自动计算下一个圣诞节）
+- 📱 完美移动端适配（safe-area、dvh、专注模式）
+- 🏠 封面介绍页（文案可通过配置文件自定义）
 
-## 🚀 本地开发 (Local Development)
+**安全**
+- 🛡️ API 速率限制（express-rate-limit）
+- 🤖 Cloudflare Turnstile 人机验证
+- 🔐 CORS 白名单、文件上传类型过滤
+- ✅ 生产环境强制校验必要环境变量
 
-### 1. 克隆项目
+## 🛠 技术栈
+
+| 层 | 技术 |
+|---|------|
+| 前端 | Vue 3, Vue Router 4, Vite 7 |
+| 后端 | Node.js, Express 5, JWT |
+| 数据库 | SQLite, Prisma 5 ORM |
+| 认证 | Argon2 (密码), LinuxDo OAuth, Nodemailer (邮件验证) |
+| 部署 | PM2, Caddy (HTTPS), Cloudflare |
+
+## 📂 目录结构
+
+```
+deco/
+├── src/                     # 前端源码
+│   ├── components/          #   组件 (ChristmasTree, ChristmasCard, AuthModal...)
+│   ├── composables/         #   组合式函数 (useAuth)
+│   ├── config/              #   前端配置 (封面页文案 landing.js)
+│   ├── views/               #   页面 (Landing, Home, TreeView, About...)
+│   └── router/              #   路由
+├── server/                  # 后端源码
+│   ├── config.js            #   环境变量 & 配置
+│   ├── index.js             #   Express 入口
+│   ├── routes/              #   路由 (auth.js, trees.js)
+│   ├── middleware/           #   中间件 (auth.js)
+│   ├── lib/                 #   工具库 (crypto, upload, email, prisma)
+│   ├── prisma/              #   数据库 Schema & 迁移
+│   └── uploads/             #   用户上传图片
+├── dist/                    # 前端构建产物
+├── public/                  # 静态资源 (树图片, 图标)
+└── vite.config.js           # Vite 配置
+```
+
+## 🚀 本地开发
+
+### 1. 克隆 & 安装
+
 ```bash
 git clone https://github.com/shmilyty/deco.git
 cd deco
-```
 
-### 2. 安装依赖
-
-需要分别安装根目录（前端）和 `server` 目录（后端）的依赖。
-
-```bash
-# 安装前端依赖
+# 前端
 npm install
 
-# 安装后端依赖
+# 后端
 cd server
 npm install
 ```
 
-### 3. 配置数据库
-
-确保在 `server` 目录下。
+### 2. 初始化数据库
 
 ```bash
-# 生成 Prisma Client
+cd server
 npx prisma generate
-
-# 运行数据库迁移 (创建 dev.db)
-npx prisma migrate dev --name init
+npx prisma migrate dev
 ```
 
-### 4. 启动项目
+### 3. 启动
 
-你需要打开两个终端窗口：
+需要两个终端：
 
-- **终端 1 (后端)**：
+```bash
+# 终端 1：后端（端口 3000）
+cd server
+node index.js
 
-  ```bash
-  cd server
-  node index.js
-  ```
+# 终端 2：前端（端口 5173）
+npm run dev
+```
 
-- **终端 2 (前端)**：
-
-  ```bash
-  # 回到根目录
-  npm run dev
-  ```
-
-访问 `http://localhost:5173` 即可看到效果。
+访问 http://localhost:5173/tree/ 。开发模式下无需配置 OAuth，自动使用模拟登录。
 
 ------
 
-## ☁️ 服务器部署指南 (Deployment)
+## ☁️ 生产部署
 
-本项目推荐使用 **Ubuntu + PM2 + Caddy** 进行部署。
+推荐 **Ubuntu + PM2 + Caddy** 。
 
-### 1. 环境准备
-
-确保服务器已安装 Node.js (v20+) 和 PM2。
+### 1. 服务器环境
 
 ```bash
-# 安装 Node.js (Install Node.js)
-# Add the NodeSource repository for Node.js 20.x
+# Node.js 20+
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt update && sudo apt install -y nodejs
 
-# Update package lists after adding the new repository
-sudo apt update
-
-# Install Node.js
-sudo apt install -y nodejs
-
-# 安装 PM2 (Install PM2)
+# PM2
 sudo npm install -g pm2
 ```
 
 ### 2. 部署代码
 
-将代码上传至服务器 `/root/deco`（示例路径）。
-
 ```bash
 cd /root/deco
+git clone https://github.com/shmilyty/deco.git .
 npm install
-cd server
-npm install
+cd server && npm install
 ```
 
 ### 3. 配置环境变量
 
-在 `server` 目录下创建 `.env` 文件：
+```bash
+# 生成密钥
+openssl rand -hex 32  # 用于 SECRET_KEY
+openssl rand -hex 32  # 用于 JWT_SECRET
+```
+
+创建 `server/.env`（参考 `server/.env.example`）：
+
+```ini
+NODE_ENV=production
+DATABASE_URL=file:./prod.db
+
+SECRET_KEY=你的随机密钥1
+JWT_SECRET=你的随机密钥2
+
+# LinuxDo OAuth（在 connect.linux.do 创建应用）
+LINUXDO_CLIENT_ID=xxx
+LINUXDO_CLIENT_SECRET=xxx
+LINUXDO_REDIRECT_URI=https://你的域名/tree/api/auth/callback
+
+# Cloudflare Turnstile
+TURNSTILE_SECRET_KEY=xxx
+
+# CORS
+ALLOWED_ORIGINS=https://你的域名
+
+# 管理员
+ADMIN_LINUXDO_ID=你的LinuxDo用户ID
+
+# SMTP 邮件（可选，不配则验证链接打印到日志）
+# SMTP_HOST=smtp.qq.com
+# SMTP_PORT=465
+# SMTP_USER=noreply@example.com
+# SMTP_PASS=授权码
+# SMTP_FROM=Deco My Tree <noreply@example.com>
+
+# 邮箱域名白名单（可选，不设=允许所有）
+# EMAIL_DOMAIN_WHITELIST=gmail.com,qq.com,163.com
+```
+
+### 4. 构建 & 启动
 
 ```bash
-nano .env
-```
+# 构建前端
+cd /root/deco
+npm run build
 
-代码段
-
-```
-# 数据库连接 (SQLite 文件路径)
-DATABASE_URL="file:./dev.db"
-
-# 加密密钥 (随便乱打一串复杂的字符，千万别告诉别人)
-SECRET_KEY="这里填写一个复杂的随机字符串作为加密密钥"
-```
-
-初始化生产环境数据库：
-
-```bash
+# 初始化数据库
+cd server
 npx prisma generate
 npx prisma migrate deploy
+
+# 启动
+pm2 start index.js --name decotree
+pm2 save && pm2 startup
 ```
 
-### 4. 构建前端
-
-后端配置了静态托管 `../dist`，所以需要先构建前端。
-
-```bash
-# 在项目根目录
-npm run build
-```
-
-### 5. 启动服务 (PM2)
-
-```bash
-cd server
-pm2 start index.js --name "decotree"
-
-# 可选，设置服务器开机自启动
-pm2 save
-pm2 startup
-```
-
-### 6. 配置反向代理 (Caddy)
-
-使用 Caddy 处理 HTTPS 和路径转发（假设挂载在 `/tree/` 子路径）。
+### 5. Caddy 反向代理
 
 `/etc/caddy/Caddyfile`:
 
-```
+```caddyfile
 your-domain.com {
-    # 如果使用 Cloudflare 源服务器证书
     tls /etc/caddy/cert.pem /etc/caddy/key.pem
 
-    # 将 /tree/ 路径转发给 Node.js 后端
-    handle_path /tree/* {
+    handle /tree/* {
         reverse_proxy localhost:3000
     }
 
-    # 兜底重定向
+    handle /uploads/* {
+        reverse_proxy localhost:3000
+    }
+
     handle {
-        redir [https://your-domain.com/tree/](https://your-domain.com/tree/) 301
+        redir https://your-domain.com/tree/ 301
     }
 }
 ```
 
-重启 Caddy：`sudo systemctl reload caddy`
+```bash
+sudo systemctl reload caddy
+```
+
+### 6. 验证
+
+- 访问 `https://你的域名/tree/` 看到封面页
+- 点击登录测试 OAuth 和邮箱注册
+- 挂礼物测试图片上传
 
 ------
 
-## 📂 目录结构
+## ⚙️ 自定义配置
 
-Plaintext
+### 封面页文案
 
-```
-deco/
-├── dist/               # 前端构建产物 (Vue打包后)
-├── public/             # 静态资源 (图标、图片)
-├── src/                # 前端源代码
-│   ├── components/     # 组件 (ChristmasTree, Card, Countdown...)
-│   ├── views/          # 页面 (Home, About)
-│   └── ...
-├── server/             # 后端源代码
-│   ├── prisma/         # 数据库 Schema 和 SQLite 文件
-│   ├── uploads/        # 用户上传的图片存储目录
-│   ├── index.js        # Express 入口文件
-│   └── ...
-├── vite.config.js      # Vite 配置
-└── ...
+编辑 `src/config/landing.js`，修改标题、介绍、功能亮点等文案后重新 `npm run build`。
+
+### 时间胶囊解锁日期
+
+在 `server/.env` 中设置：
+
+```ini
+UNLOCK_DATE=2025-12-25T00:00:00
 ```
 
-## 🤝 贡献 (Contributing)
+## 🤝 贡献
 
-如果你有好的点子（比如UI美化，账号绑定等），欢迎提交 Pull Request！
-
-也欢迎提 Issues！
+欢迎提交 Pull Request 和 Issues！
 
 ## 📄 License
 
-- 本项目使用 [GNU General Public License v3.0](LICENSE)
+[GNU General Public License v3.0](LICENSE)

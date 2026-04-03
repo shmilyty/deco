@@ -7,6 +7,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id              Int       @id @default(autoincrement())
+  linuxdoId       Int?      @unique
+  email           String?   @unique
+  passwordHash    String?
+  emailVerified   Boolean   @default(false)
+  verifyToken     String?   @unique
+  verifyTokenExp  DateTime?
+  username        String
+  avatarUrl       String?
+  trustLevel      Int       @default(0)
+  isAdmin         Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  tree            Tree?
+  follows         Follow[]
+}
+
+model Tree {
+  id           Int          @id @default(autoincrement())
+  slug         String       @unique @default(uuid())
+  title        String       @default("My Christmas Tree")
+  ownerId      Int          @unique
+  owner        User         @relation(fields: [ownerId], references: [id])
+  isPublic     Boolean      @default(true)
+  isAccessible Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  decorations  Decoration[]
+  followers    Follow[]
+}
+
 model Decoration {
   id        Int      @id @default(autoincrement())
   x         String
@@ -17,4 +48,17 @@ model Decoration {
   isPrivate Boolean  @default(false)
   images    String?
   createdAt DateTime @default(now())
+  treeId    Int
+  tree      Tree     @relation(fields: [treeId], references: [id])
+}
+
+model Follow {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  treeId    Int
+  tree      Tree     @relation(fields: [treeId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, treeId])
 }

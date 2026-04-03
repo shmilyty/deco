@@ -1,8 +1,14 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue';
 
-// 目标日期：2025年12月25日 00:00:00
-const TARGET_DATE = new Date('2025-12-25T00:00:00').getTime();
+const getNextChristmas = () => {
+  const now = new Date();
+  const thisYear = now.getFullYear();
+  const christmas = new Date(thisYear, 11, 25);
+  return now >= christmas ? new Date(thisYear + 1, 11, 25).getTime() : christmas.getTime();
+};
+
+const TARGET_DATE = getNextChristmas();
 
 const timeLeft = ref(0);
 let timer = null;

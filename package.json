@@ -5,13 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:server": "cd server && node index.js",
+    "dev:migrate": "cd server && npx prisma migrate dev",
+    "dev:generate": "cd server && npx prisma generate",
+    "dev:setup": "cd server && npm install && npx prisma generate && npx prisma migrate dev",
     "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
     "vue": "^3.5.24",
     "vue-router": "^4.6.3"
   },

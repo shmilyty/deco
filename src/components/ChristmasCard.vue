@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onUnmounted } from 'vue';
+import { ref, computed, watch, onUnmounted, onMounted, nextTick } from 'vue';
 
 // 1. Props & Emits
 const props = defineProps({
@@ -9,8 +9,8 @@ const props = defineProps({
   locked: Boolean
 });
 const emit = defineEmits(['close', 'submit']);
-
-// 2. 状态定义 (全部放在最前面)
+const toastType = ref('warning');
+// 2. 状态定义
 const step = ref('edit');
 const currentIndex = ref(0);
 const nickname = ref('');
@@ -21,6 +21,11 @@ const selectedFiles = ref([]);
 const previewUrls = ref([]);
 const showWarning = ref(false);
 const warningMsg = ref("");
+const isVerified = ref(false);
+
+// 验证码相关状态
+const turnstileToken = ref('');
+const turnstileWidgetId = ref(null); // 用来记录渲染后的 ID，方便清除
 
 // 3. 常量定义
 const EASTER_EGG_ICON = '/tree/icons/secret.png';
@@ -35,7 +40,13 @@ const icons = [
   '/tree/icons/mistletoe.png',
   '/tree/icons/cupcake.png'
 ];
-
+const imgBaseUrl = import.meta.env.PROD ? '/tree' : 'http://localhost:3000';
+const showToast = (msg, type = 'warning') => {
+  warningMsg.value = msg;
+  toastType.value = type; // 记录类型
+  showWarning.value = true;
+  setTimeout(() => { showWarning.value = false; }, 3000);
+};
 // 4. 计算属性
 const visibleIcons = computed(() => {
   const total = icons.length;
@@ -52,10 +63,42 @@ const visibleIcons = computed(() => {
 });
 
 // 5. 方法定义
-const triggerWarning = (msg) => {
-  warningMsg.value = msg;
-  showWarning.value = true;
-  setTimeout(() => { showWarning.value = false; }, 3000);
+const triggerWarning = (msg) => showToast(msg, 'warning');
+
+// --- 🤖 验证码渲染核心函数 ---
+const renderTurnstile = () => {
+  // 1. 检查环境：Turnstile 库是否加载？元素是否存在？
+  if (!window.turnstile || !document.getElementById('cf-turnstile')) {
+    return; // 还没准备好，先不管
+  }
+
+  // 2. 清理旧的（防止重复渲染报错）
+  if (turnstileWidgetId.value) {
+    try {
+      window.turnstile.remove(turnstileWidgetId.value);
+    } catch(e) { /* 忽略清理错误 */ }
+    turnstileWidgetId.value = null;
+  }
+
+  // 3. 开始渲染
+  try {
+    turnstileWidgetId.value = window.turnstile.render('#cf-turnstile', {
+      sitekey: import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAACHbbnubC4T8Eic-',
+      callback: function(token) {
+        turnstileToken.value = token;
+        setTimeout(() => {
+          isVerified.value = true;
+          showToast("✅ 人机验证通过！", "success"); // 👈 触发绿色弹窗
+        }, 1000);
+      },
+      'expired-callback': function() {
+        turnstileToken.value = '';
+        isVerified.value = false; // ✨ 过期了要重新显示
+      }
+    });
+  } catch (e) {
+    console.log("Turnstile渲染跳过:", e);
+  }
 };
 
 const tryTriggerEasterEgg = () => {
@@ -95,9 +138,16 @@ const removeImage = (index) => {
   previewUrls.value.splice(index, 1);
 };
 
+const isDev = !import.meta.env.PROD;
+
 const toPreview = () => {
   if (!content.value.trim()) {
     triggerWarning("你的祝福卡片还是空的呢 📝");
+    return;
+  }
+  // 检查验证码 (dev 模式跳过)
+  if (!isDev && !turnstileToken.value) {
+    triggerWarning("请先完成人机验证 🤖");
     return;
   }
   step.value = 'preview';
@@ -112,17 +162,36 @@ const confirmSubmit = () => {
     nickname: nickname.value || '神秘人',
     content: content.value,
     isPrivate: isPrivate.value,
-    images: selectedFiles.value
+    images: selectedFiles.value,
+    token: turnstileToken.value // 提交 Token
   });
 };
 
-// 6. 监听器 (⚠️ 关键：必须放在所有变量声明之后！)
-watch(() => props.isOpen, (val) => {
+// 6. 生命周期与监听
+onMounted(() => {
+  // 加载 Cloudflare 脚本
+  if (!document.getElementById('turnstile-script')) {
+    const script = document.createElement('script');
+    script.id = 'turnstile-script';
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async = true;
+    script.onload = () => {
+      // 脚本加载完，如果卡片此时正开着，尝试渲染
+      if (props.isOpen && props.mode === 'write') {
+        renderTurnstile();
+      }
+    };
+    document.head.appendChild(script);
+  }
+});
+
+// ⚠️ 关键修复：监听 isOpen 变化
+watch(() => props.isOpen, async (val) => {
   if (val) {
-    // 卡片打开：添加 class
+    // 1. 样式处理
     document.body.classList.add('reading-mode');
     
-    // 如果是写模式：重置表单
+    // 2. 如果是写信模式，初始化数据并渲染验证码
     if (props.mode === 'write') {
       step.value = 'edit';
       currentIndex.value = 0;
@@ -132,14 +201,17 @@ watch(() => props.isOpen, (val) => {
       isPrivate.value = false;
       selectedFiles.value = [];
       previewUrls.value = [];
+      turnstileToken.value = '';
+      isVerified.value = false;
+      // ⚠️ 重点：等待 DOM 更新 (nextTick)，确保 div 出来了再渲染
+      await nextTick();
+      renderTurnstile();
     }
   } else {
-    // 卡片关闭：移除 class
     document.body.classList.remove('reading-mode');
   }
 });
 
-// 7. 生命周期钩子
 onUnmounted(() => {
   document.body.classList.remove('reading-mode');
   previewUrls.value.forEach(url => URL.revokeObjectURL(url));
@@ -151,8 +223,8 @@ onUnmounted(() => {
     <div v-if="isOpen" class="overlay" @click.self="$emit('close')">
       
       <Transition name="slide-down">
-        <div v-if="showWarning" class="warning-toast">
-          <span class="warning-icon">⚠️</span>
+        <div v-if="showWarning" class="warning-toast" :class="toastType">
+          <span class="warning-icon">{{ toastType === 'success' ? '' : '' }}</span>
           {{ warningMsg }}
         </div>
       </Transition>
@@ -209,6 +281,10 @@ onUnmounted(() => {
                 <span class="checkmark"></span>
                 <span class="text">悄悄话 (仅对方可见)</span>
               </label>
+              <div class="captcha-wrapper" v-if="!isVerified && !isDev">
+                <div id="cf-turnstile"></div>
+              </div>
+              <div v-if="isDev" class="dev-badge">DEV MODE - Turnstile skipped</div>
               <button class="action-btn primary" @click="toPreview">生成预览</button>
             </div>
 
@@ -253,7 +329,7 @@ onUnmounted(() => {
             </div>
             <div class="message-body">{{ data?.content }}</div>
             <div v-if="data?.images && data.images.length > 0" class="image-gallery">
-              <img v-for="(path, idx) in data.images" :key="idx" :src="`http://localhost:3000${path}`" class="gallery-img" />
+              <img v-for="(path, idx) in data.images" :key="idx" :src="`/tree${path}`" class="gallery-img" />
             </div>
           </div>
         </div>
@@ -267,12 +343,7 @@ onUnmounted(() => {
 /* =========================================
    1. 全局配置与字体
    ========================================= */
-:root {
-  --handwriting-font: 'Courgette', 'Ma Shan Zheng', cursive;
-  --card-padding: 24px; /* 默认内边距 */
-  --primary-red: #d42426;
-  --bg-paper: #fffbf0;
-}
+/* CSS 变量直接内联到各选择器中（scoped 样式中 :root 变量无法生效） */
 
 /* 基础动画 */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
@@ -315,8 +386,6 @@ onUnmounted(() => {
   margin: 0 auto;
   
   /* 外观还原：红框 + 羊皮纸背景 */
-  /*border: 4px solid var(--primary-red);*/
-  
   border: 4px solid #d42426;
   border-radius: 16px;
   background: #fffbf0;
@@ -376,30 +445,13 @@ onUnmounted(() => {
   height: 100%;
   
   /* ⚠️ 关键：这里控制内边距，保证分割线不贴边 */
-  padding: var(--card-padding); 
+  padding: 24px; 
   box-sizing: border-box;
   
   /* 内部滚动：防止内容太长被切掉 */
   overflow-y: auto; 
   overflow-x: hidden;
 }
-.card-face1 {
-  grid-area: stack;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  background: transparent;
-  width: 100%;
-  height: 80%;
-  
-  /* ⚠️ 关键：这里控制内边距，保证分割线不贴边 */
-  padding: var(--card-padding); 
-  box-sizing: border-box;
-  
-  /* 内部滚动：防止内容太长被切掉 */
-  overflow-y: auto; 
-  overflow-x: hidden;
-}
-
 .card-front { transform: rotateY(0deg); }
 .card-back { transform: rotateY(180deg); }
 
@@ -436,7 +488,7 @@ onUnmounted(() => {
 .carousel-item.active { 
   background: #fff; 
   box-shadow: 0 4px 12px rgba(212, 36, 38, 0.2); 
-  border: 2px solid var(--primary-red); 
+  border: 2px solid #d42426;
   width: 60px; height: 60px; 
   z-index: 100; 
 }
@@ -582,7 +634,7 @@ textarea { resize: none; }
 /* =========================================
    11. 其他组件 (提示/锁定)
    ========================================= */
-.warning-toast { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: #f97316; color: white; padding: 8px 20px; border-radius: 30px; font-size: 0.9rem; z-index: 200; display: flex; gap: 6px; white-space: nowrap; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
 .locked-view { text-align: center; color: #666; width: 100%; }
 .big-icon { font-size: 3.5rem; margin-bottom: 10px; display: block; }
 .blur-text { filter: blur(4px); opacity: 0.5; margin: 15px 0; background: #eee; padding: 10px; }
@@ -605,7 +657,7 @@ textarea { resize: none; }
 
 /* 📱 窄屏微调 (针对 iPhone SE 等超小屏) */
 @media (max-width: 380px) {
-  :root { --card-padding: 16px; }
+  .card-face { padding: 16px; }
   .card { border-width: 3px; }
   .title { margin-bottom: 10px; font-size: 1.4rem; }
   .preview-box { padding: 15px; margin-bottom: 10px; }
@@ -616,5 +668,49 @@ textarea { resize: none; }
 .carousel-item.active.is-egg img { filter: drop-shadow(0 0 15px gold); animation: egg-shake 0.5s ease-in-out infinite; }
 @keyframes egg-shake {
   0%, 100% { transform: rotate(0deg) scale(1); } 25% { transform: rotate(-10deg) scale(1.1); } 75% { transform: rotate(10deg) scale(1.1); }
+}
+.warning-toast { 
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%); 
+  padding: 8px 20px; border-radius: 30px; font-size: 0.9rem; z-index: 200; 
+  display: flex; gap: 6px; white-space: nowrap; 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+  transition: all 0.3s; /* 增加过渡 */
+}
+
+/* 🟠 警告皮肤 (默认) */
+.warning-toast.warning {
+  background: #f97316; /* 橙色 */
+  color: white;
+}
+
+/* 🟢 成功皮肤 (新增) */
+.warning-toast.success {
+  background: #165b33; /* 圣诞绿 */
+  color: white;
+  border: 1px solid #1f7a44;
+}
+
+/* 验证码容器调整 */
+.captcha-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* margin-bottom: 15px; */ /* 可以去掉这个，让消失更彻底 */
+  width: 100%;
+  min-height: 0; /* 允许高度塌陷 */
+}
+/* 给验证码容器加一点 margin，仅当它显示时生效 */
+.captcha-wrapper:not(:empty) {
+   margin-bottom: 15px;
+}
+
+.dev-badge {
+  text-align: center;
+  font-size: 0.7rem;
+  color: #999;
+  background: #f0f0f0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }
 </style>

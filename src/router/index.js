@@ -1,14 +1,19 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import Landing from '../views/Landing.vue';
 import Home from '../views/Home.vue';
 import About from '../views/About.vue';
+import FollowedTrees from '../views/FollowedTrees.vue';
+import TreeView from '../views/TreeView.vue';
 
 const router = createRouter({
-  // ⚠️ 关键：必须设置 base 为 /tree/，否则刷新后可能会 404 或者路径错乱
-  history: createWebHistory('/tree/'), 
+  history: createWebHistory('/tree/'),
   routes: [
-    { path: '/', name: 'Home', component: Home },
-    { path: '/about', name: 'About', component: About }
-  ]
+    { path: '/', name: 'Landing', component: Landing },
+    { path: '/explore', name: 'Home', component: Home },
+    { path: '/about', name: 'About', component: About },
+    { path: '/followed', name: 'FollowedTrees', component: FollowedTrees },
+    { path: '/:slug', name: 'TreeView', component: TreeView, props: true },
+  ],
 });
 
 export default router;
