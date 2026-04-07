@@ -28,3 +28,4 @@ dist-ssr
 # Claude & History
 .claude
 .history
+.docs
