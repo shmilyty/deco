@@ -90,8 +90,15 @@ const handleSignup = async () => {
     });
     const data = await res.json();
     if (data.success) {
-      successMsg.value = data.message;
-      mode.value = 'login';
+      if (data.token) {
+        setToken(data.token);
+        await fetchMe();
+        emit('success');
+        emit('close');
+      } else {
+        successMsg.value = data.message;
+        mode.value = 'login';
+      }
     } else {
       error.value = data.error;
     }

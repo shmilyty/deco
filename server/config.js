@@ -2,6 +2,14 @@ require('dotenv').config();
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
+function parseBooleanEnv(value, defaultValue) {
+  if (value == null || value === '') return defaultValue;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true') return true;
+  if (normalized === 'false') return false;
+  return defaultValue;
+}
+
 if (IS_DEV) {
   if (!process.env.SECRET_KEY) {
     process.env.SECRET_KEY = 'dev-only-secret-key';
@@ -34,6 +42,11 @@ const EMAIL_DOMAIN_WHITELIST = (process.env.EMAIL_DOMAIN_WHITELIST || '')
   .map(d => d.trim().toLowerCase())
   .filter(Boolean);
 
+const EMAIL_VERIFICATION_REQUIRED = parseBooleanEnv(
+  process.env.EMAIL_VERIFICATION_REQUIRED,
+  true
+);
+
 module.exports = {
   IS_DEV,
   PORT: parseInt(process.env.PORT) || 3000,
@@ -55,6 +68,8 @@ module.exports = {
   SMTP_PASS: process.env.SMTP_PASS || '',
   SMTP_FROM: process.env.SMTP_FROM || 'Deco My Tree <noreply@example.com>',
   SMTP_ENABLED: !!process.env.SMTP_HOST,
+
+  EMAIL_VERIFICATION_REQUIRED,
 
   // Email whitelist
   EMAIL_DOMAIN_WHITELIST,

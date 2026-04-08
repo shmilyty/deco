@@ -181,6 +181,9 @@ ADMIN_LINUXDO_ID=你的LinuxDo用户ID
 # SMTP_PASS=授权码
 # SMTP_FROM=Deco My Tree <noreply@example.com>
 
+# 是否要求邮箱验证（默认 true；设为 false 则注册后直接登录）
+EMAIL_VERIFICATION_REQUIRED=true
+
 # 邮箱域名白名单（可选，不设=允许所有）
 # EMAIL_DOMAIN_WHITELIST=gmail.com,qq.com,163.com
 ```
@@ -249,6 +252,16 @@ sudo systemctl reload caddy
 ```ini
 UNLOCK_DATE=2025-12-25T00:00:00
 ```
+
+### 邮箱验证开关
+
+在 `server/.env` 中设置：
+
+```ini
+EMAIL_VERIFICATION_REQUIRED=false
+```
+
+设为 `false` 后，邮箱注册用户会在注册成功后直接登录，不再要求点击验证邮件。
 
 ## 🤝 贡献
 

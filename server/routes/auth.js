@@ -48,8 +48,13 @@ router.post('/signup', async (req, res) => {
     }
 
     const passwordHash = await argon2.hash(password);
-    const verifyToken = crypto.randomBytes(32).toString('hex');
-    const verifyTokenExp = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const requireEmailVerification = config.EMAIL_VERIFICATION_REQUIRED;
+    const verifyToken = requireEmailVerification
+      ? crypto.randomBytes(32).toString('hex')
+      : null;
+    const verifyTokenExp = requireEmailVerification
+      ? new Date(Date.now() + 24 * 60 * 60 * 1000)
+      : null;
 
     const cleanName = sanitizeUsername(username);
     const user = await prisma.user.create({
@@ -57,17 +62,22 @@ router.post('/signup', async (req, res) => {
         email: email.toLowerCase(),
         passwordHash,
         username: cleanName,
-        emailVerified: false,
+        emailVerified: !requireEmailVerification,
         verifyToken,
         verifyTokenExp,
       },
     });
 
-    sendVerificationEmail(user.email, verifyToken).catch(err => {
-      console.error('Failed to send verification email:', err);
-    });
+    if (requireEmailVerification) {
+      sendVerificationEmail(user.email, verifyToken).catch(err => {
+        console.error('Failed to send verification email:', err);
+      });
 
-    res.json({ success: true, message: '注册成功，请查收验证邮件' });
+      return res.json({ success: true, message: '注册成功，请查收验证邮件' });
+    }
+
+    const token = signJwt(user);
+    res.json({ success: true, token, message: '注册成功' });
   } catch (err) {
     console.error('Signup error:', err);
     res.status(500).json({ error: '注册失败' });
@@ -92,7 +102,7 @@ router.post('/email-login', async (req, res) => {
       return res.status(401).json({ error: '邮箱或密码错误' });
     }
 
-    if (!user.emailVerified) {
+    if (config.EMAIL_VERIFICATION_REQUIRED && !user.emailVerified) {
       return res.status(403).json({ error: '请先验证邮箱', needVerify: true });
     }
 
@@ -137,6 +147,10 @@ router.get('/verify-email', async (req, res) => {
 
 router.post('/resend-verify', async (req, res) => {
   try {
+    if (!config.EMAIL_VERIFICATION_REQUIRED) {
+      return res.json({ success: true, message: '当前未启用邮箱验证' });
+    }
+
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: '邮箱不能为空' });
 
