@@ -1,10 +1,23 @@
 node_modules/*
 # Keep environment variables out of version control
 .env
+.env.*
+!.env.example
 
 /generated/prisma
-
 /prisma/dev.db
-
 /uploads/*
+
+# Databases
+*.db
+*.sqlite
+*.sqlite-journal
+
+# Build & Cache
+/dist
+/build
+.cache
+.temp
+tmp
+prisma/migrations
 
