@@ -4,8 +4,12 @@ node_modules/*
 .env.*
 !.env.example
 
-/generated/prisma
+# Prisma
+/prisma/migrations/
 /prisma/dev.db
+/generated/prisma
+
+# Uploads
 /uploads/*
 
 # Databases
@@ -19,5 +23,5 @@ node_modules/*
 .cache
 .temp
 tmp
-prisma/migrations
+
 
